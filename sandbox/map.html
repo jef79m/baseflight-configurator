@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style type="text/css">
+            html {
+                height: 100%;
+            }
+            body {
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            #map-canvas {
+                height: 100%;
+            }
+        </style>
+        <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+        <script type="text/javascript">
+            var marker = false;
+            var map = false;
+            google.load("maps", "3", {other_params:'key=AIzaSyBGm31y5lqzvaJ226Wg5Uj1IoB6qOAniMI&sensor=false', callback: function() {
+                var mapOptions = {
+                    zoom: 1,
+                    mapTypeId: google.maps.MapTypeId.HYBRID,
+                    center: new google.maps.LatLng(28.2893, -19.4375)
+                };
+
+                map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+
+                google.maps.event.addListener(map, 'click', function( event ){
+                    console.log( "Latitude: "+event.latLng.lat()+" "+", longitude: "+event.latLng.lng() );
+                });
+            }});
+
+            function update_marker(lat, lon) {
+                if (marker) {
+                    marker.setPosition(new google.maps.LatLng(lat, lon));
+                } else {
+                    // initialize
+                    marker = new google.maps.Marker({
+                        position: new google.maps.LatLng(lat, lon),
+                        map: map,
+                        title: 'GPS Shows that you are here!'
+                    });
+                }
+            }
+
+            window.addEventListener("message", function(event) {
+                if (event.data.command == 'update') {
+                    update_marker(event.data.lat, event.data.lon);
+                }
+            }, false);
+        </script>
+    </head>
+    <body>
+        <div id="map-canvas"></div>
+    </body>
+</html>

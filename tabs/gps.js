@@ -9,6 +9,18 @@ function tab_initialize_gps () {
     }
 
     function process_html() {
+        // begin test
+        setTimeout(function() {
+            var iframe = document.getElementById('map');
+
+            iframe.contentWindow.postMessage({
+                command: 'update',
+                lat: 49.080162863460984,
+                lon: 19.30572509765625
+            }, '*');
+        }, 1000);
+        // end test
+
         function get_raw_gps_data() {
             send_message(MSP_codes.MSP_RAW_GPS, false, false, get_gpsvinfo_data);
         }

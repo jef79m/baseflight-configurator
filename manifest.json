@@ -18,6 +18,12 @@
         }
     },
 
+    "sandbox": {
+        "pages": [
+            "sandbox/map.html"
+        ]
+    },
+
     "permissions": [
         "https://www.google-analytics.com/",
         "https://*.github.com/",
