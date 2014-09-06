@@ -28,6 +28,9 @@ TABS.initial_setup.initialize = function (callback) {
         // translate to user-selected language
         localize();
 
+        // initialize 3D
+        self.initialize3D();
+
         // Fill in misc stuff
         $('input[name="mincellvoltage"]').val(MISC.vbatmincellvoltage);
         $('input[name="maxcellvoltage"]').val(MISC.vbatmaxcellvoltage);
@@ -269,13 +272,6 @@ TABS.initial_setup.initialize = function (callback) {
             $('.bat-mah-drawing').text(chrome.i18n.getMessage('initialSetupBatteryAValue', [ANALOG.amperage.toFixed(2)]));
             $('.rssi').text(chrome.i18n.getMessage('initialSetupRSSIValue', [((ANALOG.rssi / 1023) * 100).toFixed(0)]));
 
-            // Update cube
-            var cube = $('div#cube');
-
-            cube.css('-webkit-transform', 'rotateY(' + ((SENSOR_DATA.kinematics[2] * -1.0) - self.yaw_fix) + 'deg)');
-            $('#cubePITCH', cube).css('-webkit-transform', 'rotateX(' + SENSOR_DATA.kinematics[1] + 'deg)');
-            $('#cubeROLL', cube).css('-webkit-transform', 'rotateZ(' + SENSOR_DATA.kinematics[0] + 'deg)');
-
             // Update heading
             $('span.heading').text(chrome.i18n.getMessage('initialSetupheading', [SENSOR_DATA.kinematics[2]]));
         }
@@ -291,6 +287,62 @@ TABS.initial_setup.initialize = function (callback) {
     }
 };
 
+var mesh;
+TABS.initial_setup.initialize3D = function () {
+    var self = this,
+        canvas = $('#canvas'),
+        wrapper = $('#canvas_wrapper'),
+        scene = new THREE.Scene(),
+        camera = new THREE.PerspectiveCamera(50, 200 / 200, 1, 10000),
+        renderer = new THREE.WebGLRenderer({
+            canvas: canvas.get(0),
+            alpha: true,
+            antialias: true
+        });
+
+    var axis = new THREE.Vector3(0.5, 0.5, 0);
+
+    var geometry = new THREE.BoxGeometry(150, 80, 300);
+    var materials = [
+        new THREE.MeshBasicMaterial({color: 0xff3333}),
+        new THREE.MeshBasicMaterial({color: 0xff8800}),
+        new THREE.MeshBasicMaterial({color: 0xffff33}),
+        new THREE.MeshBasicMaterial({color: 0x33ff33}),
+        new THREE.MeshBasicMaterial({color: 0x3333ff}),
+        new THREE.MeshBasicMaterial({color: 0x8833ff}),
+    ];
+    var boxMaterials = new THREE.MeshFaceMaterial(materials);
+    mesh = new THREE.Mesh(geometry, boxMaterials);
+
+    renderer.setSize(wrapper.width(), wrapper.height());
+    camera.position.z = 600;
+    scene.add(camera);
+    scene.add(mesh);
+
+    function animate() {
+        self.animationFrame = requestAnimationFrame(animate);
+        render();
+    }
+
+    function render() {
+        mesh.rotation.x = (SENSOR_DATA.kinematics[1] * -1.0) * 0.017453292519943295; // this one is acting up
+        mesh.rotation.y = ((SENSOR_DATA.kinematics[2] * -1.0) - self.yaw_fix) * 0.017453292519943295;
+        mesh.rotation.z = (SENSOR_DATA.kinematics[0] * -1.0) * 0.017453292519943295;
+
+        renderer.render(scene, camera);
+    }
+
+    animate();
+
+    // handle window resize
+    $(window).resize(function () {
+        renderer.setSize(wrapper.width(), wrapper.height());
+    });
+};
+
 TABS.initial_setup.cleanup = function (callback) {
+    cancelAnimationFrame(this.animationFrame);
+    $(window).unbind('resize');
+
     if (callback) callback();
 };
