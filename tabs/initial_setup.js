@@ -274,6 +274,9 @@ TABS.initial_setup.initialize = function (callback) {
 
             // Update heading
             $('span.heading').text(chrome.i18n.getMessage('initialSetupheading', [SENSOR_DATA.kinematics[2]]));
+
+            // update 3D
+            self.render3D();
         }
 
         GUI.interval_add('initial_setup_data_pull', get_analog_data, 50, true);
@@ -287,20 +290,18 @@ TABS.initial_setup.initialize = function (callback) {
     }
 };
 
-var mesh;
 TABS.initial_setup.initialize3D = function () {
     var self = this,
         canvas = $('#canvas'),
         wrapper = $('#canvas_wrapper'),
         scene = new THREE.Scene(),
-        camera = new THREE.PerspectiveCamera(50, 200 / 200, 1, 10000),
+        camera = new THREE.PerspectiveCamera(50, wrapper.width() / wrapper.height(), 1, 10000),
         renderer = new THREE.WebGLRenderer({
             canvas: canvas.get(0),
             alpha: true,
             antialias: true
-        });
-
-    var axis = new THREE.Vector3(0.5, 0.5, 0);
+        }),
+        meshWrapper = new THREE.Object3D();
 
     var geometry = new THREE.BoxGeometry(150, 80, 300);
     var materials = [
@@ -312,36 +313,33 @@ TABS.initial_setup.initialize3D = function () {
         new THREE.MeshBasicMaterial({color: 0x8833ff}),
     ];
     var boxMaterials = new THREE.MeshFaceMaterial(materials);
-    mesh = new THREE.Mesh(geometry, boxMaterials);
+    var mesh = new THREE.Mesh(geometry, boxMaterials);
 
     renderer.setSize(wrapper.width(), wrapper.height());
     camera.position.z = 600;
     scene.add(camera);
-    scene.add(mesh);
+    scene.add(meshWrapper);
+    meshWrapper.add(mesh);
 
-    function animate() {
-        self.animationFrame = requestAnimationFrame(animate);
-        render();
-    }
-
-    function render() {
+    this.render3D = function () {
         mesh.rotation.x = (SENSOR_DATA.kinematics[1] * -1.0) * 0.017453292519943295; // this one is acting up
-        mesh.rotation.y = ((SENSOR_DATA.kinematics[2] * -1.0) - self.yaw_fix) * 0.017453292519943295;
+        meshWrapper.rotation.y = ((SENSOR_DATA.kinematics[2] * -1.0) - self.yaw_fix) * 0.017453292519943295;
         mesh.rotation.z = (SENSOR_DATA.kinematics[0] * -1.0) * 0.017453292519943295;
 
         renderer.render(scene, camera);
     }
 
-    animate();
+    this.render3D();
 
     // handle window resize
     $(window).resize(function () {
         renderer.setSize(wrapper.width(), wrapper.height());
+        camera.aspect = wrapper.width() / wrapper.height();
+        camera.updateProjectionMatrix();
     });
 };
 
 TABS.initial_setup.cleanup = function (callback) {
-    cancelAnimationFrame(this.animationFrame);
     $(window).unbind('resize');
 
     if (callback) callback();
