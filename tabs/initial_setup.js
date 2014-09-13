@@ -336,6 +336,8 @@ TABS.initial_setup.initialize3D = function () {
         renderer.setSize(wrapper.width(), wrapper.height());
         camera.aspect = wrapper.width() / wrapper.height();
         camera.updateProjectionMatrix();
+
+        self.render3D();
     });
 };
 
